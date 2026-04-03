@@ -8,7 +8,7 @@ class RegisterForm(UserCreationForm):
     first_name = forms.CharField(max_length=50, required=True, label="Ismi")
     last_name = forms.CharField(max_length=50, required=True, label="Familiyasi")
     email = forms.EmailField(required=False, label="Email (ixtiyoriy)")
-    role = forms.ChoiceField(choices=ROLES, label="Siz kim sifatida kirasiz?")
+    role = forms.ChoiceField(choices=ROLES, label="Siz kim sifatida kirasiz?", required=False, initial='worker')
     region = forms.ChoiceField(choices=[('', '-- Viloyatni tanlang --')] + list(REGIONS), label="Viloyat")
     phone = forms.CharField(max_length=20, required=False, label="Telefon raqam (ixtiyoriy)")
 
@@ -28,7 +28,7 @@ class RegisterForm(UserCreationForm):
             user.save()
             UserProfile.objects.create(
                 user=user,
-                role=self.cleaned_data['role'],
+                role=self.cleaned_data.get('role') or 'worker',
                 region=self.cleaned_data.get('region', ''),
                 phone=self.cleaned_data.get('phone', ''),
             )

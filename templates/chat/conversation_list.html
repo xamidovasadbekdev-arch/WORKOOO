@@ -6,7 +6,7 @@
     {% if conversations %}
     <div class="conversation-list">
         {% for conv in conversations %}
-        {% with last=conv.last_message unread=conv.unread_count %}
+        {% with last=conv.last_message unread=conv.unread %}
         <a href="{% url 'conversation_detail' conv.pk %}" class="conv-card {% if unread %}conv-unread{% endif %}">
             <div class="conv-other-avatar">
                 {% if user == conv.employer %}

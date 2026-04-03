@@ -13,6 +13,9 @@ def conversation_list_view(request):
     worker_convs = Conversation.objects.filter(worker=request.user).select_related('job', 'employer', 'employer__profile')
     conversations = list(employer_convs) + list(worker_convs)
     conversations.sort(key=lambda c: c.created_at, reverse=True)
+    # Attach unread count as attribute so template can access it without calling method with user arg
+    for conv in conversations:
+        conv.unread = conv.unread_count(request.user)
     return render(request, 'chat/conversation_list.html', {'conversations': conversations})
 
 

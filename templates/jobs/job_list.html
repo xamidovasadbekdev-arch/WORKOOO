@@ -16,7 +16,7 @@
                     <select name="region" class="form-control" onchange="this.form.submit()">
                         <option value="">Barcha viloyatlar</option>
                         {% for key, val in regions %}
-                        <option value="{{ key }}" {% if selected_region==key %}selected{% endif %}>{{ val }}</option>
+                        <option value="{{ key }}" {% if selected_region == key %}selected{% endif %}>{{ val }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -25,7 +25,7 @@
                     <select name="category" class="form-control" onchange="this.form.submit()">
                         <option value="">Barcha kategoriyalar</option>
                         {% for key, val in categories %}
-                        <option value="{{ key }}" {% if selected_category==key %}selected{% endif %}>{{ val }}</option>
+                        <option value="{{ key }}" {% if selected_category == key %}selected{% endif %}>{{ val }}</option>
                         {% endfor %}
                     </select>
                 </div>

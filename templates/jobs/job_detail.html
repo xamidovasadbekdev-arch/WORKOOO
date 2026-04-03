@@ -81,6 +81,11 @@
                     </form>
                     {% elif app.status == 'qabul_qilindi' %}
                     <span class="badge-accepted">Qabul qilindi</span>
+                    {% with conv=job.conversations.all %}
+                    {% for c in conv %}{% if c.worker == app.worker %}
+                    <a href="{% url 'conversation_detail' c.pk %}" class="btn btn-primary btn-sm">💬 Chat</a>
+                    {% endif %}{% endfor %}
+                    {% endwith %}
                     {% if job.status == 'tugallangan' %}
                     <a href="{% url 'rate_worker' job.pk app.worker.pk %}" class="btn btn-outline btn-sm">⭐ Baholash</a>
                     {% endif %}
@@ -175,11 +180,11 @@
 {% block extra_js %}
 {% if job.lat and job.lng %}
 <script>
-    const jobMap = L.map('job-map').setView([{{ job.lat }}, { { job.lng } }], 15);
+    const jobMap = L.map('job-map').setView([{{ job.lat }}, {{ job.lng }}], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap'
     }).addTo(jobMap);
-    const marker = L.marker([{{ job.lat }}, { { job.lng } }]).addTo(jobMap);
+    const marker = L.marker([{{ job.lat }}, {{ job.lng }}]).addTo(jobMap);
     marker.bindPopup('<strong>{{ job.title|escapejs }}</strong><br>{{ job.address|escapejs }}').openPopup();
 </script>
 {% endif %}

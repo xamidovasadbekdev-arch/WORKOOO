@@ -3,22 +3,24 @@
 {% block content %}
 <div class="auth-page">
     <div class="auth-card">
-        <div class="auth-logo">💼 IshTop</div>
+        <span class="auth-logo">💼 IshTop</span>
         <h2>Tizimga kirish</h2>
         {% if error %}
-        <div class="alert alert-error">{{ error }}</div>
+        <div class="alert alert-error" style="margin-bottom:1.25rem;">{{ error }}</div>
         {% endif %}
         <form method="post">
             {% csrf_token %}
             <div class="form-group">
                 <label>Foydalanuvchi nomi</label>
-                <input type="text" name="username" class="form-control" autofocus required placeholder="username">
+                <input type="text" name="username" class="form-control" autofocus required placeholder="username_ingiz">
             </div>
             <div class="form-group">
                 <label>Parol</label>
                 <input type="password" name="password" class="form-control" required placeholder="••••••••">
             </div>
-            <button type="submit" class="btn btn-primary btn-block btn-lg">Kirish</button>
+            <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:.5rem;">
+                🚀 Kirish
+            </button>
         </form>
         <p class="auth-switch">Hisobingiz yo'qmi? <a href="{% url 'register' %}">Ro'yxatdan o'ting</a></p>
     </div>

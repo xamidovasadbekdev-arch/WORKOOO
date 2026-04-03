@@ -41,7 +41,7 @@
     const pollUrl = "{% url 'get_messages' conversation.pk %}";
     const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
 
-    let lastMsgId = {% if chat_messages %}{ { chat_messages.last.pk |default: 0 } } {% else %} 0{% endif %};
+    let lastMsgId = {% if chat_messages %}{{ chat_messages.last.pk|default:0 }}{% else %}0{% endif %};
 
     function scrollBottom() {
         const el = document.getElementById('chatMessages');

@@ -20,10 +20,11 @@
                 {% endif %}
                 {% if avg %}
                 <div class="profile-rating">
-                    <span class="stars">{% for i in "12345" %}{% if forloop.counter <= avg %}⭐{% else %}☆{% endif %}{%
-                            endfor %}</span>
-                            <strong>{{ avg }}</strong>
-                            <span class="text-muted">({{ profile.rating_count }} sharh)</span>
+                    <span class="stars">
+                        {% for i in "12345" %}{% if forloop.counter <= avg %}⭐{% else %}☆{% endif %}{% endfor %}
+                    </span>
+                    <strong>{{ avg }}</strong>
+                    <span class="text-muted">({{ profile.rating_count }} sharh)</span>
                 </div>
                 {% endif %}
                 {% if profile.bio %}
@@ -74,16 +75,18 @@
                     <a href="{% url 'profile' rating.employer.pk %}">
                         <strong>{{ rating.employer.get_full_name|default:rating.employer.username }}</strong>
                     </a>
-                    <div class="review-stars">{% for i in "12345" %}{% if forloop.counter <= rating.score %}⭐{% else
-                            %}☆{% endif %}{% endfor %}</div>
-                            <span class="text-muted">{{ rating.created_at|date:"d.m.Y" }}</span>
+                    <div class="review-stars">
+                        {% for i in "12345" %}{% if forloop.counter <= rating.score %}⭐{% else %}☆{% endif %}{% endfor %}
                     </div>
-                    <a href="{% url 'job_detail' rating.job.pk %}" class="review-job">{{ rating.job.title }}</a>
-                    {% if rating.comment %}<p>{{ rating.comment }}</p>{% endif %}
+                    <span class="text-muted">{{ rating.created_at|date:"d.m.Y" }}</span>
                 </div>
-                {% endfor %}
+                <a href="{% url 'job_detail' rating.job.pk %}" class="review-job">{{ rating.job.title }}</a>
+                {% if rating.comment %}<p>{{ rating.comment }}</p>{% endif %}
             </div>
-            {% endif %}
+            {% endfor %}
         </div>
+        {% endif %}
+
     </div>
-    {% endblock %}
+</div>
+{% endblock %}

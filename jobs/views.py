@@ -170,12 +170,19 @@ def manage_application_view(request, pk):
         application.save()
 
         # Create conversation
-        from chat.models import Conversation
+        from chat.models import Conversation, Message
         conversation, created = Conversation.objects.get_or_create(
             job=application.job,
             employer=request.user,
             worker=application.worker
         )
+        # If this is a new conversation and the worker wrote a note, post it as the first chat message
+        if created and application.message.strip():
+            Message.objects.create(
+                conversation=conversation,
+                sender=application.worker,
+                body=application.message.strip()
+            )
         messages.success(request, f"{application.worker.get_full_name() or application.worker.username} qabul qilindi. Chat ochildi!")
         return redirect('conversation_detail', pk=conversation.pk)
 
