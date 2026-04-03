@@ -82,3 +82,13 @@ def get_messages_view(request, pk):
     } for m in messages_qs]
 
     return JsonResponse({'messages': data})
+
+
+@login_required
+def unread_total_view(request):
+    """Returns total unread message count across all conversations — for navbar badge"""
+    from django.db.models import Q
+    total = Message.objects.filter(
+        Q(conversation__employer=request.user) | Q(conversation__worker=request.user)
+    ).exclude(sender=request.user).filter(is_read=False).count()
+    return JsonResponse({'unread': total})

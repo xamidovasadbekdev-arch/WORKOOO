@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load l10n %}
 {% block title %}{{ job.title }} — IshTop{% endblock %}
 {% block extra_head %}
 {% if job.lat and job.lng %}
@@ -8,6 +9,95 @@
         border-radius: 16px;
         overflow: hidden;
         margin: 1rem 0;
+        cursor: pointer;
+        position: relative;
+        transition: box-shadow 0.2s;
+    }
+    #job-map:hover {
+        box-shadow: 0 8px 32px rgba(99,102,241,0.25);
+    }
+    .map-fullscreen-hint {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        z-index: 1000;
+        background: rgba(30,30,40,0.82);
+        color: #fff;
+        border-radius: 10px;
+        padding: 6px 14px;
+        font-size: 0.82rem;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        backdrop-filter: blur(6px);
+    }
+
+    /* Full-screen map modal */
+    #mapModal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(10,10,20,0.72);
+        backdrop-filter: blur(6px);
+        animation: fadeInModal 0.2s ease;
+    }
+    #mapModal.active { display: flex; align-items: center; justify-content: center; }
+    @keyframes fadeInModal {
+        from { opacity: 0; } to { opacity: 1; }
+    }
+    #mapModalInner {
+        position: relative;
+        width: 98vw;
+        height: 96vh;
+        max-width: 1400px;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+        animation: scaleInModal 0.25s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes scaleInModal {
+        from { transform: scale(0.93); opacity: 0; }
+        to   { transform: scale(1);    opacity: 1; }
+    }
+    #mapFull { width: 100%; height: 100%; }
+    #closeMapModal {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        z-index: 10001;
+        background: rgba(30,30,40,0.85);
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 44px;
+        height: 44px;
+        font-size: 1.3rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(8px);
+        transition: background 0.18s, transform 0.15s;
+    }
+    #closeMapModal:hover { background: #ef4444; transform: scale(1.1); }
+    .map-modal-title {
+        position: absolute;
+        top: 18px;
+        left: 18px;
+        z-index: 10001;
+        background: rgba(30,30,40,0.85);
+        color: #fff;
+        border-radius: 12px;
+        padding: 8px 18px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        backdrop-filter: blur(8px);
+        max-width: calc(100% - 100px);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 </style>
 {% endif %}
@@ -43,7 +133,10 @@
 
             {% if job.lat and job.lng %}
             <h3>📍 Joylashuv</h3>
-            <div id="job-map"></div>
+            <div style="position:relative;" id="mapWrapper">
+                <div id="job-map"></div>
+                <div class="map-fullscreen-hint">🔍 Kattalashtirish uchun bosing</div>
+            </div>
             {% endif %}
         </div>
 
@@ -176,16 +269,68 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Full-screen map modal -->
+{% if job.lat and job.lng %}
+<div id="mapModal">
+    <div id="mapModalInner">
+        <div class="map-modal-title">📍 {{ job.title }} — {{ job.address }}</div>
+        <button id="closeMapModal" title="Yopish">✕</button>
+        <div id="mapFull"></div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
+
 {% block extra_js %}
 {% if job.lat and job.lng %}
 <script>
-    const jobMap = L.map('job-map').setView([{{ job.lat }}, {{ job.lng }}], 15);
+    // Small preview map
+    {% localize off %}
+    const jobMap = L.map('job-map', { zoomControl: true, dragging: false, scrollWheelZoom: false, doubleClickZoom: false }).setView([{{ job.lat }}, {{ job.lng }}], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
+        attribution: '© OpenStreetMap',
+        maxZoom: 19
     }).addTo(jobMap);
     const marker = L.marker([{{ job.lat }}, {{ job.lng }}]).addTo(jobMap);
     marker.bindPopup('<strong>{{ job.title|escapejs }}</strong><br>{{ job.address|escapejs }}').openPopup();
+    {% endlocalize %}
+    // Force tile reload after layout is complete (fixes blank/grey tiles)
+    setTimeout(function () { jobMap.invalidateSize(); }, 300);
+
+    // Open full-screen modal on map click
+    let fullMap = null;
+    document.getElementById('mapWrapper').addEventListener('click', function () {
+        const modal = document.getElementById('mapModal');
+        modal.classList.add('active');
+
+        if (!fullMap) {
+            {% localize off %}
+            fullMap = L.map('mapFull').setView([{{ job.lat }}, {{ job.lng }}], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(fullMap);
+            const fullMarker = L.marker([{{ job.lat }}, {{ job.lng }}]).addTo(fullMap);
+            {% endlocalize %}
+            fullMarker.bindPopup('<strong>{{ job.title|escapejs }}</strong><br>{{ job.address|escapejs }}').openPopup();
+        } else {
+            fullMap.invalidateSize();
+        }
+    });
+
+    document.getElementById('closeMapModal').addEventListener('click', function (e) {
+        e.stopPropagation();
+        document.getElementById('mapModal').classList.remove('active');
+    });
+
+    document.getElementById('mapModal').addEventListener('click', function (e) {
+        if (e.target === this) this.classList.remove('active');
+    });
+
+    // ESC to close
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') document.getElementById('mapModal').classList.remove('active');
+    });
 </script>
 {% endif %}
 {% endblock %}

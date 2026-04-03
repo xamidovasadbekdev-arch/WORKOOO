@@ -4,52 +4,89 @@
 <div class="container form-page">
     <div class="form-card">
         <h2>✏️ Profilni tahrirlash</h2>
-        <form method="post" enctype="multipart/form-data">
+
+        <!-- Role selector tabs -->
+        <div style="margin-bottom: 1.5rem;">
+            <p style="font-size:.9rem; color:var(--text-light); margin-bottom:.6rem;">Siz kim sifatida ishlaysiz?</p>
+            <div class="role-tabs">
+                <button class="role-tab {% if profile.role == 'worker' %}active{% endif %}"
+                        data-role="worker" type="button">
+                    🧰 Men ishchi
+                    <small>Ish qidiraman</small>
+                </button>
+                <button class="role-tab {% if profile.role == 'employer' %}active{% endif %}"
+                        data-role="employer" type="button">
+                    🏢 Men ish beruvchi
+                    <small>Ishchi yollaymin</small>
+                </button>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="profileEditForm">
             {% csrf_token %}
+            <input type="hidden" name="role" id="roleFieldEdit" value="{{ profile.role }}">
+
             <div class="form-grid-2">
                 <div class="form-group">
                     <label>{{ form.first_name.label }}</label>
                     {{ form.first_name }}
+                    {% if form.first_name.errors %}<span class="form-error">{{ form.first_name.errors.0 }}</span>{% endif %}
                 </div>
                 <div class="form-group">
                     <label>{{ form.last_name.label }}</label>
                     {{ form.last_name }}
+                    {% if form.last_name.errors %}<span class="form-error">{{ form.last_name.errors.0 }}</span>{% endif %}
                 </div>
             </div>
             <div class="form-group">
                 <label>{{ form.email.label }}</label>
                 {{ form.email }}
+                {% if form.email.errors %}<span class="form-error">{{ form.email.errors.0 }}</span>{% endif %}
             </div>
             <div class="form-grid-2">
                 <div class="form-group">
                     <label>{{ form.region.label }}</label>
                     {{ form.region }}
+                    {% if form.region.errors %}<span class="form-error">{{ form.region.errors.0 }}</span>{% endif %}
                 </div>
                 <div class="form-group">
                     <label>{{ form.phone.label }}</label>
                     {{ form.phone }}
+                    {% if form.phone.errors %}<span class="form-error">{{ form.phone.errors.0 }}</span>{% endif %}
                 </div>
             </div>
             <div class="form-group">
                 <label>{{ form.bio.label }}</label>
                 {{ form.bio }}
+                {% if form.bio.errors %}<span class="form-error">{{ form.bio.errors.0 }}</span>{% endif %}
             </div>
             <div class="form-group">
                 <label>{{ form.avatar.label }}</label>
-                {% if instance.avatar %}
-                <div class="current-avatar">
-                    <img src="{{ instance.avatar.url }}" alt=""
+                {% if profile.avatar %}
+                <div class="current-avatar" style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem;">
+                    <img src="{{ profile.avatar.url }}" alt=""
                         style="width:60px;height:60px;border-radius:50%;object-fit:cover;">
-                    <span>Joriy rasm</span>
+                    <span style="color:var(--text-light);font-size:.85rem;">Joriy rasm</span>
                 </div>
                 {% endif %}
                 {{ form.avatar }}
             </div>
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary btn-lg">Saqlash</button>
+                <button type="submit" class="btn btn-primary btn-lg">💾 Saqlash</button>
                 <a href="{% url 'profile_own' %}" class="btn btn-ghost">Bekor qilish</a>
             </div>
         </form>
     </div>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.role-tab').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.role-tab').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('roleFieldEdit').value = this.dataset.role;
+        });
+    });
+</script>
 {% endblock %}

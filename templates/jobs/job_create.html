@@ -1,5 +1,217 @@
 {% extends 'base.html' %}
 {% block title %}{% if edit %}Tahrirlash{% else %}Ish e'lon qilish{% endif %} — IshTop{% endblock %}
+{% block extra_head %}
+<style>
+    /* ── Map picker trigger button ── */
+    #mapPickerTrigger {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 14px 18px;
+        border-radius: 14px;
+        border: 2px dashed rgba(99,102,241,0.4);
+        background: rgba(99,102,241,0.06);
+        color: var(--text, #e2e8f0);
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+    }
+    #mapPickerTrigger:hover {
+        border-color: rgba(99,102,241,0.8);
+        background: rgba(99,102,241,0.12);
+        transform: translateY(-1px);
+    }
+    #mapPickerTrigger .trigger-icon { font-size: 1.4rem; }
+    #mapPickerTrigger .trigger-sub {
+        font-size: 0.8rem;
+        color: var(--text-light, #9ca3af);
+        font-weight: 400;
+        margin-top: 2px;
+    }
+    #pickedAddressDisplay {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+        padding: 12px 16px;
+        background: rgba(34,197,94,0.08);
+        border: 1.5px solid rgba(34,197,94,0.3);
+        border-radius: 12px;
+        font-size: 0.88rem;
+        color: #86efac;
+    }
+    #pickedAddressDisplay.visible { display: flex; }
+    #pickedAddressDisplay .addr-edit-btn {
+        margin-left: auto;
+        background: none;
+        border: 1.5px solid rgba(99,102,241,0.4);
+        color: var(--primary, #6366f1);
+        border-radius: 8px;
+        padding: 4px 12px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+    }
+    #pickedAddressDisplay .addr-edit-btn:hover {
+        background: rgba(99,102,241,0.1);
+    }
+
+    /* ── Full-screen map MODAL ── */
+    #mapModal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        background: rgba(5,5,15,0.7);
+        backdrop-filter: blur(8px);
+        animation: fadeInBg 0.2s ease;
+    }
+    #mapModal.open { display: flex; flex-direction: column; }
+    @keyframes fadeInBg { from { opacity:0 } to { opacity:1 } }
+
+    /* Top bar inside modal */
+    #mapModalBar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 18px;
+        background: rgba(15,15,30,0.95);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        flex-shrink: 0;
+        z-index: 2;
+    }
+    #mapModalBar .modal-title {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #e2e8f0;
+        flex-shrink: 0;
+    }
+    #mapSearchInput {
+        flex: 1;
+        background: rgba(255,255,255,0.07);
+        border: 1.5px solid rgba(99,102,241,0.3);
+        border-radius: 10px;
+        padding: 9px 14px;
+        color: #e2e8f0;
+        font-size: 0.9rem;
+        outline: none;
+        transition: border-color 0.18s;
+    }
+    #mapSearchInput:focus { border-color: #6366f1; }
+    #mapSearchInput::placeholder { color: #6b7280; }
+    #mapSearchBtn {
+        background: linear-gradient(135deg,#6366f1,#8b5cf6);
+        color:#fff;
+        border:none;
+        border-radius:10px;
+        padding: 9px 18px;
+        font-weight:600;
+        font-size:0.88rem;
+        cursor:pointer;
+        white-space: nowrap;
+        transition: opacity 0.18s;
+    }
+    #mapSearchBtn:hover { opacity:0.85; }
+    #locateModalBtn {
+        background: rgba(255,255,255,0.07);
+        color:#e2e8f0;
+        border: 1.5px solid rgba(255,255,255,0.12);
+        border-radius:10px;
+        padding: 9px 14px;
+        font-size:0.88rem;
+        cursor:pointer;
+        white-space: nowrap;
+        transition: all 0.15s;
+    }
+    #locateModalBtn:hover { background: rgba(255,255,255,0.12); }
+
+    /* Map area */
+    #mapModalMap {
+        flex: 1;
+        width: 100%;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Bottom confirm bar */
+    #mapModalBottom {
+        padding: 14px 20px;
+        background: rgba(15,15,30,0.95);
+        backdrop-filter: blur(16px);
+        border-top: 1px solid rgba(255,255,255,0.08);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-shrink: 0;
+        z-index: 2;
+    }
+    #mapModalAddress {
+        flex: 1;
+        font-size: 0.88rem;
+        color: #9ca3af;
+        line-height: 1.4;
+    }
+    #mapModalAddress strong {
+        display: block;
+        color: #e2e8f0;
+        font-size: 0.92rem;
+        margin-bottom: 2px;
+    }
+    #confirmLocBtn {
+        background: linear-gradient(135deg,#22c55e,#16a34a);
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 28px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: opacity 0.18s, transform 0.15s;
+        white-space: nowrap;
+    }
+    #confirmLocBtn:hover { opacity:0.88; transform: scale(1.03); }
+    #confirmLocBtn:disabled { opacity:0.4; cursor:default; transform:none; }
+    #closeMapModalBtn {
+        background: rgba(239,68,68,0.12);
+        color: #f87171;
+        border: 1.5px solid rgba(239,68,68,0.3);
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size:0.88rem;
+        cursor:pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+    }
+    #closeMapModalBtn:hover { background: rgba(239,68,68,0.22); }
+
+    /* Crosshair cursor on map */
+    #mapModalMap .leaflet-container { cursor: crosshair !important; }
+
+    /* Hint tooltip */
+    .map-click-hint {
+        position: absolute;
+        bottom: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 500;
+        background: rgba(15,15,30,0.88);
+        color: #e2e8f0;
+        padding: 8px 18px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        pointer-events: none;
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(255,255,255,0.1);
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container form-page">
     <div class="form-card">
@@ -47,21 +259,28 @@
                 </div>
             </div>
 
-            <!-- Address with geocoding -->
-            <div class="form-group">
-                <label>{{ form.address.label }}</label>
-                <div class="address-row">
-                    {{ form.address }}
-                    <button type="button" class="btn btn-outline" id="geocodeBtn">📍 Kartada ko'rsatish</button>
-                </div>
-                {{ form.lat }}
-                {{ form.lng }}
-            </div>
+            <!-- Hidden lat/lng/address -->
+            {{ form.lat }}
+            {{ form.lng }}
+            <div style="display:none">{{ form.address }}</div>
 
-            <!-- Map preview -->
-            <div id="create-map-wrapper" style="display:none; margin:1rem 0;">
-                <div id="create-map" style="height:280px; border-radius:16px;"></div>
-                <small class="text-muted">Markerning aniq joyini o'zgartirish uchun uni suring</small>
+            <!-- ── Map Picker ── -->
+            <div class="form-group">
+                <label>📍 Ish joylashuvi</label>
+
+                <button type="button" id="mapPickerTrigger">
+                    <span class="trigger-icon">🗺️</span>
+                    <span>
+                        Xaritadan joy tanlash
+                        <span class="trigger-sub">Bosing va xaritada aniq joyni belgilang</span>
+                    </span>
+                </button>
+
+                <div id="pickedAddressDisplay">
+                    <span>✅</span>
+                    <span id="pickedAddressText">Joylashuv tanlanmadi</span>
+                    <button type="button" class="addr-edit-btn" id="changeLocBtn">✏️ O'zgartirish</button>
+                </div>
             </div>
 
             <div class="form-group">
@@ -74,7 +293,7 @@
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary btn-lg">
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
                     {% if edit %}Saqlash{% else %}E'lon qilish{% endif %}
                 </button>
                 <a href="{% if edit %}{% url 'job_detail' job.pk %}{% else %}{% url 'my_jobs' %}{% endif %}"
@@ -83,40 +302,255 @@
         </form>
     </div>
 </div>
+
+<!-- ════════════════════ FULL SCREEN MAP MODAL ════════════════════ -->
+<div id="mapModal">
+    <!-- Top bar -->
+    <div id="mapModalBar">
+        <span class="modal-title">📍 Joylashuvni tanlang</span>
+        <input type="text" id="mapSearchInput" placeholder="Manzil qidiring... (masalan: Chilonzor, Toshkent)" />
+        <button type="button" id="mapSearchBtn">🔍 Qidirish</button>
+        <button type="button" id="locateModalBtn">📡 Mening joylashuvim</button>
+    </div>
+
+    <!-- Leaflet map -->
+    <div id="mapModalMap">
+        <div class="map-click-hint" id="mapClickHint">🖱️ Xaritaning istalgan joyiga bosing yoki markerni suring</div>
+    </div>
+
+    <!-- Bottom confirm -->
+    <div id="mapModalBottom">
+        <div id="mapModalAddress">
+            <strong id="mapModalAddrTitle">Xaritadan joy tanlang</strong>
+            <span id="mapModalAddrSub">Keyin quyidagi tugmani bosing</span>
+        </div>
+        <button type="button" id="closeMapModalBtn">✕ Bekor qilish</button>
+        <button type="button" id="confirmLocBtn" disabled>✓ Tasdiqlash</button>
+    </div>
+</div>
+
 {% endblock %}
+
 {% block extra_js %}
 <script>
-    let createMap = null;
-    let createMarker = null;
+(function () {
+    const DEFAULT_LAT = 41.2995;
+    const DEFAULT_LNG = 69.2401;
 
-    document.getElementById('geocodeBtn').addEventListener('click', function () {
-        const address = document.querySelector('[name="address"]').value;
-        if (!address) { alert("Avval manzilni kiriting"); return; }
+    const initLat = parseFloat('{{ job.lat|default:"" }}') || null;
+    const initLng = parseFloat('{{ job.lng|default:"" }}') || null;
 
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ', O\'zbekiston')}`)
+    // ─── State ───
+    let modalMap = null;
+    let modalMarker = null;
+    let pendingLat = null;
+    let pendingLng = null;
+    let pendingAddr = null;
+
+    // ─── Elements ───
+    const modal       = document.getElementById('mapModal');
+    const trigger     = document.getElementById('mapPickerTrigger');
+    const changeBtn   = document.getElementById('changeLocBtn');
+    const closeBtn    = document.getElementById('closeMapModalBtn');
+    const confirmBtn  = document.getElementById('confirmLocBtn');
+    const searchInput = document.getElementById('mapSearchInput');
+    const searchBtn   = document.getElementById('mapSearchBtn');
+    const locateBtn   = document.getElementById('locateModalBtn');
+    const addrDisplay = document.getElementById('pickedAddressDisplay');
+    const addrText    = document.getElementById('pickedAddressText');
+    const modalTitle  = document.getElementById('mapModalAddrTitle');
+    const modalSub    = document.getElementById('mapModalAddrSub');
+    const hint        = document.getElementById('mapClickHint');
+
+    // ─── Open modal ───
+    function openModal() {
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+
+        if (!modalMap) {
+            const center = (pendingLat && pendingLng)
+                ? [pendingLat, pendingLng]
+                : (initLat && initLng ? [initLat, initLng] : [DEFAULT_LAT, DEFAULT_LNG]);
+            const zoom = (pendingLat || initLat) ? 15 : 11;
+
+            modalMap = L.map('mapModalMap').setView(center, zoom);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(modalMap);
+
+            // Click to place marker
+            modalMap.on('click', function (e) {
+                placeModalMarker(e.latlng.lat, e.latlng.lng);
+                doReverseGeocode(e.latlng.lat, e.latlng.lng);
+            });
+
+            // If editing — restore old marker
+            const startLat = pendingLat || initLat;
+            const startLng = pendingLng || initLng;
+            if (startLat && startLng) {
+                placeModalMarker(startLat, startLng);
+                doReverseGeocode(startLat, startLng);
+            }
+        } else {
+            setTimeout(() => modalMap.invalidateSize(), 100);
+        }
+    }
+
+    function closeModal() {
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    // ─── Place marker on modal map ───
+    function placeModalMarker(lat, lng) {
+        pendingLat = lat;
+        pendingLng = lng;
+
+        if (!modalMarker) {
+            modalMarker = L.marker([lat, lng], { draggable: true }).addTo(modalMap);
+            modalMarker.on('dragend', function (e) {
+                const pos = e.target.getLatLng();
+                pendingLat = pos.lat;
+                pendingLng = pos.lng;
+                doReverseGeocode(pos.lat, pos.lng);
+            });
+        } else {
+            modalMarker.setLatLng([lat, lng]);
+        }
+
+        modalMap.setView([lat, lng], modalMap.getZoom() < 13 ? 15 : modalMap.getZoom());
+
+        // Hide hint once marker placed
+        if (hint) hint.style.display = 'none';
+
+        modalTitle.textContent = '⏳ Manzil aniqlanmoqda...';
+        modalSub.textContent = '';
+        confirmBtn.disabled = true;
+    }
+
+    // ─── Reverse geocode ───
+    function doReverseGeocode(lat, lng) {
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=uz`)
             .then(r => r.json())
             .then(data => {
-                if (data.length === 0) { alert("Manzil topilmadi. Aniqroq manzil kiriting."); return; }
+                if (data && data.display_name) {
+                    pendingAddr = data.display_name;
+                    modalTitle.textContent = '📍 ' + pendingAddr.split(',')[0];
+                    modalSub.textContent = pendingAddr;
+                    confirmBtn.disabled = false;
+                }
+            })
+            .catch(() => {
+                pendingAddr = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                modalTitle.textContent = '📍 Koordinatlar: ' + pendingAddr;
+                modalSub.textContent = 'Tanlangan nuqta';
+                confirmBtn.disabled = false;
+            });
+    }
+
+    // ─── Confirm selection ───
+    confirmBtn.addEventListener('click', function () {
+        if (!pendingLat || !pendingLng) return;
+
+        // Write into form hidden fields
+        document.querySelector('[name="lat"]').value = pendingLat.toFixed(6);
+        document.querySelector('[name="lng"]').value = pendingLng.toFixed(6);
+        document.querySelector('[name="address"]').value = pendingAddr || '';
+
+        // Update trigger UI
+        addrText.textContent = pendingAddr || `${pendingLat.toFixed(4)}, ${pendingLng.toFixed(4)}`;
+        addrDisplay.classList.add('visible');
+        trigger.style.display = 'none';
+
+        closeModal();
+    });
+
+    // ─── Address search ───
+    function doSearch() {
+        const q = searchInput.value.trim();
+        if (!q) { searchInput.focus(); return; }
+        searchBtn.textContent = '⏳';
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ", O'zbekiston")}&limit=1`)
+            .then(r => r.json())
+            .then(data => {
+                searchBtn.textContent = '🔍 Qidirish';
+                if (!data.length) { alert('Manzil topilmadi. Aniqroq yozing.'); return; }
                 const lat = parseFloat(data[0].lat);
                 const lng = parseFloat(data[0].lon);
-                document.querySelector('[name="lat"]').value = lat;
-                document.querySelector('[name="lng"]').value = lng;
+                placeModalMarker(lat, lng);
+                doReverseGeocode(lat, lng);
+            })
+            .catch(() => { searchBtn.textContent = '🔍 Qidirish'; alert('Qidiruv xatosi.'); });
+    }
+    searchBtn.addEventListener('click', doSearch);
+    searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doSearch(); } });
 
-                document.getElementById('create-map-wrapper').style.display = 'block';
-                if (!createMap) {
-                    createMap = L.map('create-map').setView([lat, lng], 15);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(createMap);
-                    createMarker = L.marker([lat, lng], { draggable: true }).addTo(createMap);
-                    createMarker.on('dragend', function (e) {
-                        const pos = e.target.getLatLng();
-                        document.querySelector('[name="lat"]').value = pos.lat.toFixed(6);
-                        document.querySelector('[name="lng"]').value = pos.lng.toFixed(6);
-                    });
-                } else {
-                    createMap.setView([lat, lng], 15);
-                    createMarker.setLatLng([lat, lng]);
-                }
-            });
+    // ─── Locate me ───
+    locateBtn.addEventListener('click', function () {
+        if (!navigator.geolocation) { alert("GPS qo'llab-quvvatlanmaydi."); return; }
+        locateBtn.textContent = '⏳...';
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                locateBtn.textContent = '📡 Mening joylashuvim';
+                placeModalMarker(pos.coords.latitude, pos.coords.longitude);
+                doReverseGeocode(pos.coords.latitude, pos.coords.longitude);
+            },
+            err => {
+                locateBtn.textContent = '📡 Mening joylashuvim';
+                if (err.code === 1) alert("Joylashuvga ruxsat berilmadi.");
+                else alert("Joylashuv aniqlanmadi.");
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
     });
+
+    // ─── Open / close ───
+    trigger.addEventListener('click', openModal);
+    changeBtn.addEventListener('click', function () {
+        trigger.style.display = 'flex';
+        addrDisplay.classList.remove('visible');
+        openModal();
+    });
+    closeBtn.addEventListener('click', closeModal);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // Close when clicking backdrop (outside modal inner)
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeModal();
+    });
+
+    // ─── Pre-fill if editing ───
+    if (initLat && initLng) {
+        pendingLat  = initLat;
+        pendingLng  = initLng;
+        confirmBtn.disabled = false;
+        // Still need to reverse geocode to show address
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${initLat}&lon=${initLng}&accept-language=uz`)
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.display_name) {
+                    pendingAddr = data.display_name;
+                    addrText.textContent = pendingAddr;
+                    addrDisplay.classList.add('visible');
+                    trigger.style.display = 'none';
+                }
+            })
+            .catch(() => {});
+    }
+
+    // ─── Validate on submit ───
+    document.getElementById('jobForm').addEventListener('submit', function (e) {
+        const lat = document.querySelector('[name="lat"]').value;
+        const lng = document.querySelector('[name="lng"]').value;
+        if (!lat || !lng) {
+            e.preventDefault();
+            // Open map modal and shake trigger
+            trigger.style.animation = 'none';
+            trigger.style.borderColor = '#ef4444';
+            setTimeout(() => { trigger.style.borderColor = ''; }, 2000);
+            alert('Iltimos, xaritadan ish joyini belgilang (📍 tugmasini bosing).');
+        }
+    });
+})();
 </script>
 {% endblock %}

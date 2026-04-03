@@ -1,5 +1,19 @@
 {% extends 'base.html' %}
 {% block title %}Chat — IshTop{% endblock %}
+{% block extra_head %}
+{% with job=conversation.job %}
+{% if job.lat and job.lng %}
+<style>
+    #chat-job-map {
+        height: 220px;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-top: 0.75rem;
+    }
+</style>
+{% endif %}
+{% endwith %}
+{% endblock %}
 {% block content %}
 <div class="container chat-page">
     <div class="chat-header-bar">
@@ -13,6 +27,30 @@
         </div>
         <a href="{% url 'job_detail' conversation.job.pk %}" class="chat-job-link">{{ conversation.job.title }}</a>
     </div>
+
+    <!-- Job info panel (collapsible) -->
+    {% with job=conversation.job %}
+    <div class="detail-card" style="margin-bottom:1rem; padding: 1rem 1.25rem;">
+        <details>
+            <summary style="cursor:pointer; font-weight:600; font-size:0.95rem; list-style:none; display:flex; align-items:center; gap:0.5rem;">
+                <span>📋 Ish ma'lumotlari</span>
+                <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">— bosing</span>
+            </summary>
+            <div style="margin-top:0.75rem; display:flex; flex-direction:column; gap:0.4rem; font-size:0.9rem;">
+                <div><strong>{{ job.title }}</strong></div>
+                <div>📍 {{ job.address }}{% if job.get_region_display %}, {{ job.get_region_display }}{% endif %}</div>
+                <div>💰 {{ job.get_salary_display_text }}</div>
+                {% if job.work_date %}<div>📅 {{ job.work_date }}</div>{% endif %}
+                {% if job.lat and job.lng %}
+                <div id="chat-job-map"></div>
+                {% else %}
+                <div style="color:var(--text-muted); font-size:0.82rem; margin-top:0.25rem;">🗺️ Xarita mavjud emas</div>
+                {% endif %}
+                <a href="{% url 'job_detail' job.pk %}" class="btn btn-ghost btn-sm" style="margin-top:0.5rem; align-self:flex-start;">🔗 To'liq ko'rish</a>
+            </div>
+        </details>
+    </div>
+    {% endwith %}
 
     <div class="chat-messages" id="chatMessages">
         {% for msg in chat_messages %}
@@ -90,5 +128,39 @@
                 });
             });
     }, 3000);
+
+    // Initialize job location map inside the collapsible details panel
+    {% with job=conversation.job %}
+    {% if job.lat and job.lng %}
+    (function () {
+        const jobLat = {{ job.lat }};
+        const jobLng = {{ job.lng }};
+        const jobTitle = "{{ job.title|escapejs }}";
+        const jobAddress = "{{ job.address|escapejs }}";
+        let chatMap = null;
+
+        const detailsEl = document.querySelector('.detail-card details');
+        if (detailsEl) {
+            detailsEl.addEventListener('toggle', function () {
+                if (this.open && !chatMap) {
+                    chatMap = L.map('chat-job-map', {
+                        zoomControl: true,
+                        scrollWheelZoom: false
+                    }).setView([jobLat, jobLng], 15);
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap'
+                    }).addTo(chatMap);
+
+                    const marker = L.marker([jobLat, jobLng]).addTo(chatMap);
+                    marker.bindPopup('<strong>' + jobTitle + '</strong><br>' + jobAddress).openPopup();
+                } else if (this.open && chatMap) {
+                    chatMap.invalidateSize();
+                }
+            });
+        }
+    })();
+    {% endif %}
+    {% endwith %}
 </script>
 {% endblock %}

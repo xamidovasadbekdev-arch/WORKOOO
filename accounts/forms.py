@@ -19,6 +19,14 @@ class RegisterForm(UserCreationForm):
             'username': 'Foydalanuvchi nomi',
         }
 
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if username and User.objects.filter(username=username).exists():
+            raise forms.ValidationError(
+                "Bu foydalanuvchi nomi allaqachon band. Boshqa nom tanlang."
+            )
+        return username
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.first_name = self.cleaned_data['first_name']

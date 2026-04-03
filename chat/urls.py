@@ -6,4 +6,5 @@ urlpatterns = [
     path('<int:pk>/', views.conversation_detail_view, name='conversation_detail'),
     path('<int:pk>/yuborish/', views.send_message_view, name='send_message'),
     path('<int:pk>/xabarlar/', views.get_messages_view, name='get_messages'),
+    path('oqilmagan/', views.unread_total_view, name='unread_total'),
 ]
