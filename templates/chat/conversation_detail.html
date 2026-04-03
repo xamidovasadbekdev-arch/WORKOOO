@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Chat — IshTop{% endblock %}
+{% block content %}
+<div class="container chat-page">
+    <div class="chat-header-bar">
+        <a href="{% url 'conversation_list' %}" class="btn btn-ghost btn-sm">← Orqaga</a>
+        <div class="chat-partner-info">
+            {% if user == conversation.employer %}
+            <strong>{{ conversation.worker.get_full_name|default:conversation.worker.username }}</strong>
+            {% else %}
+            <strong>{{ conversation.employer.get_full_name|default:conversation.employer.username }}</strong>
+            {% endif %}
+        </div>
+        <a href="{% url 'job_detail' conversation.job.pk %}" class="chat-job-link">{{ conversation.job.title }}</a>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+        {% for msg in chat_messages %}
+        <div class="chat-bubble {% if msg.sender == user %}bubble-own{% else %}bubble-other{% endif %}"
+            data-id="{{ msg.pk }}">
+            <p>{{ msg.body }}</p>
+            <span class="bubble-time">{{ msg.timestamp|time:"H:i" }}</span>
+        </div>
+        {% empty %}
+        <div class="chat-empty">Hali xabar yo'q. Birinchi bo'ling!</div>
+        {% endfor %}
+    </div>
+
+    <form class="chat-input-bar" id="chatForm">
+        {% csrf_token %}
+        <input type="text" id="chatInput" placeholder="Xabar yozing..." autocomplete="off" class="form-control">
+        <button type="submit" class="btn btn-primary chat-send-btn">➤</button>
+    </form>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    const conversationId = {{ conversation.pk }};
+    const currentUserId = {{ user.pk }};
+    const sendUrl = "{% url 'send_message' conversation.pk %}";
+    const pollUrl = "{% url 'get_messages' conversation.pk %}";
+    const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+    let lastMsgId = {% if chat_messages %}{ { chat_messages.last.pk |default: 0 } } {% else %} 0{% endif %};
+
+    function scrollBottom() {
+        const el = document.getElementById('chatMessages');
+        el.scrollTop = el.scrollHeight;
+    }
+    scrollBottom();
+
+    function appendBubble(msg) {
+        const div = document.createElement('div');
+        div.className = 'chat-bubble ' + (msg.is_own ? 'bubble-own' : 'bubble-other');
+        div.dataset.id = msg.id;
+        div.innerHTML = `<p>${msg.body}</p><span class="bubble-time">${msg.timestamp}</span>`;
+        document.getElementById('chatMessages').appendChild(div);
+        scrollBottom();
+    }
+
+    document.getElementById('chatForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const input = document.getElementById('chatInput');
+        const body = input.value.trim();
+        if (!body) return;
+        input.value = '';
+
+        fetch(sendUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ body: body })
+        }).then(r => r.json()).then(msg => {
+            if (msg.id) {
+                appendBubble(msg);
+                lastMsgId = msg.id;
+            }
+        });
+    });
+
+    // Poll for new messages every 3 seconds
+    setInterval(function () {
+        fetch(`${pollUrl}?after=${lastMsgId}`)
+            .then(r => r.json())
+            .then(data => {
+                data.messages.forEach(msg => {
+                    if (!document.querySelector(`[data-id="${msg.id}"]`)) {
+                        appendBubble(msg);
+                        lastMsgId = msg.id;
+                    }
+                });
+            });
+    }, 3000);
+</script>
+{% endblock %}

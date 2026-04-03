@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}Bosh sahifa — IshTop{% endblock %}
+{% block content %}
+
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-text">
+            <h1>O'zbekistonda <span class="hero-highlight">ish toping</span> yoki <span class="hero-highlight">ishchi
+                    yollang</span></h1>
+            <p>Viloyatingizdagi kunlik va qisqa muddatli ishlarni toping. Tez, oson va ishonchli.</p>
+            <div class="hero-actions">
+                <a href="{% url 'job_list' %}" class="btn btn-primary btn-lg">Ishlarni ko'rish →</a>
+                {% if not user.is_authenticated %}
+                <a href="{% url 'register' %}" class="btn btn-outline btn-lg">Ro'yxatdan o'tish</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="hero-stats">
+            <div class="stat-card">
+                <span class="stat-num">🏙️</span>
+                <span class="stat-label">14 viloyat</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-num">⚡</span>
+                <span class="stat-label">Tez ariza</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-num">⭐</span>
+                <span class="stat-label">Baholash tizimi</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <!-- Category pills -->
+        <div class="category-pills">
+            <a href="{% url 'job_list' %}?category=qurilish" class="pill">🔨 Qurilish</a>
+            <a href="{% url 'job_list' %}?category=yuk_tashish" class="pill">🚚 Yuk tashish</a>
+            <a href="{% url 'job_list' %}?category=tozalash" class="pill">🧹 Tozalash</a>
+            <a href="{% url 'job_list' %}?category=qishloq" class="pill">🌾 Qishloq xo'jaligi</a>
+            <a href="{% url 'job_list' %}?category=savdo" class="pill">🛒 Savdo</a>
+            <a href="{% url 'job_list' %}?category=ta'lim" class="pill">📚 Ta'lim</a>
+            <a href="{% url 'job_list' %}?category=cafe" class="pill">☕ Cafe</a>
+            <a href="{% url 'job_list' %}?category=it" class="pill">💻 IT</a>
+        </div>
+
+        <div class="section-header">
+            <h2>Yangi e'lonlar</h2>
+            <a href="{% url 'job_list' %}" class="see-all">Barchasini ko'rish →</a>
+        </div>
+
+        {% if jobs %}
+        <div class="jobs-grid">
+            {% for job in jobs %}
+            <a href="{% url 'job_detail' job.pk %}" class="job-card">
+                {% if job.image %}
+                <div class="job-card-img">
+                    <img src="{{ job.image.url }}" alt="{{ job.title }}">
+                </div>
+                {% endif %}
+                <div class="job-card-body">
+                    <span class="job-badge">{{ job.get_category_display }}</span>
+                    <h3 class="job-card-title">{{ job.title }}</h3>
+                    <p class="job-card-location">📍 {{ job.address }}</p>
+                    <div class="job-card-footer">
+                        <span class="job-salary">{{ job.get_salary_display_text }}</span>
+                        <span class="job-time">{{ job.created_at|timesince }} oldin</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>Hozircha ishlar yo'q.</p>
+            {% if user.is_authenticated and user.profile.role == 'employer' %}
+            <a href="{% url 'job_create' %}" class="btn btn-primary">Birinchi e'lonni joylashtiring</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="how-it-works section">
+    <div class="container">
+        <h2 class="text-center">Qanday ishlaydi?</h2>
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-icon">📝</div>
+                <h3>1. Ro'yxatdan o'ting</h3>
+                <p>Ishchi yoki ish beruvchi sifatida tez ro'yxatdan o'ting</p>
+            </div>
+            <div class="step-card">
+                <div class="step-icon">🔍</div>
+                <h3>2. Ish toping</h3>
+                <p>Viloyatingizdagi ishlarni ko'ring, filter qiling</p>
+            </div>
+            <div class="step-card">
+                <div class="step-icon">💬</div>
+                <h3>3. Chat qiling</h3>
+                <p>Ariza yuboring, qabul qilinsa chat ochildi</p>
+            </div>
+            <div class="step-card">
+                <div class="step-icon">⭐</div>
+                <h3>4. Baholang</h3>
+                <p>Ish tugagach baholash qoldiring — ishonch quriladi</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

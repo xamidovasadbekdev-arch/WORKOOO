@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}{{ profile_user.get_full_name|default:profile_user.username }} — IshTop{% endblock %}
+{% block content %}
+<div class="container profile-layout">
+    <div class="profile-main">
+        <div class="profile-hero-card">
+            {% if profile.avatar %}
+            <img src="{{ profile.avatar.url }}" class="profile-avatar" alt="">
+            {% else %}
+            <div class="profile-avatar-placeholder">{{ profile_user.first_name|first|upper }}</div>
+            {% endif %}
+            <div class="profile-hero-info">
+                <h1>{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+                <p class="profile-role-badge role-{{ profile.role }}">{{ profile.get_role_display }}</p>
+                {% if profile.region %}
+                <p>📍 {{ profile.get_region_display_name }}</p>
+                {% endif %}
+                {% if profile.phone %}
+                <p>📞 {{ profile.phone }}</p>
+                {% endif %}
+                {% if avg %}
+                <div class="profile-rating">
+                    <span class="stars">{% for i in "12345" %}{% if forloop.counter <= avg %}⭐{% else %}☆{% endif %}{%
+                            endfor %}</span>
+                            <strong>{{ avg }}</strong>
+                            <span class="text-muted">({{ profile.rating_count }} sharh)</span>
+                </div>
+                {% endif %}
+                {% if profile.bio %}
+                <p class="profile-bio">{{ profile.bio }}</p>
+                {% endif %}
+            </div>
+            {% if is_own %}
+            <a href="{% url 'profile_edit' %}" class="btn btn-outline profile-edit-btn">✏️ Tahrirlash</a>
+            {% endif %}
+        </div>
+
+        {% if posted_jobs %}
+        <div class="profile-section-card">
+            <h3>Joylashtirilgan ishlar</h3>
+            <div class="jobs-list">
+                {% for job in posted_jobs %}
+                <a href="{% url 'job_detail' job.pk %}" class="mini-job-card">
+                    <strong>{{ job.title }}</strong>
+                    <span class="job-status status-{{ job.status }}">{{ job.get_status_display }}</span>
+                    <span>{{ job.get_salary_display_text }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if applied_jobs %}
+        <div class="profile-section-card">
+            <h3>Ariza tarixim</h3>
+            <div class="jobs-list">
+                {% for app in applied_jobs %}
+                <a href="{% url 'job_detail' app.job.pk %}" class="mini-job-card">
+                    <strong>{{ app.job.title }}</strong>
+                    <span class="job-status status-{{ app.status }}">{{ app.get_status_display }}</span>
+                    <span>{{ app.job.get_salary_display_text }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if ratings %}
+        <div class="profile-section-card">
+            <h3>Baholar va sharhlar</h3>
+            {% for rating in ratings %}
+            <div class="review-card">
+                <div class="review-header">
+                    <a href="{% url 'profile' rating.employer.pk %}">
+                        <strong>{{ rating.employer.get_full_name|default:rating.employer.username }}</strong>
+                    </a>
+                    <div class="review-stars">{% for i in "12345" %}{% if forloop.counter <= rating.score %}⭐{% else
+                            %}☆{% endif %}{% endfor %}</div>
+                            <span class="text-muted">{{ rating.created_at|date:"d.m.Y" }}</span>
+                    </div>
+                    <a href="{% url 'job_detail' rating.job.pk %}" class="review-job">{{ rating.job.title }}</a>
+                    {% if rating.comment %}<p>{{ rating.comment }}</p>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endblock %}

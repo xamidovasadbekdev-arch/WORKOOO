@@ -1,0 +1,116 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="IshTop — O'zbekistonda kunlik va qisqa muddatli ish topish platformasi. Ishchilar va ish beruvchilar uchun qulay bozor.">
+    <title>{% block title %}IshTop — Ish Toping!{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-inner">
+        <a href="{% url 'home' %}" class="nav-logo">
+            <span class="logo-icon">💼</span>
+            <span class="logo-text">IshTop</span>
+        </a>
+
+        <button class="nav-hamburger" id="navHamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+
+        <div class="nav-links" id="navLinks">
+            <a href="{% url 'job_list' %}" class="nav-link">Ishlar</a>
+            {% if user.is_authenticated %}
+                {% if user.profile.role == 'employer' %}
+                <a href="{% url 'job_create' %}" class="nav-link btn-post">+ E'lon qo'shish</a>
+                <a href="{% url 'my_jobs' %}" class="nav-link">Mening ishlarim</a>
+                {% else %}
+                <a href="{% url 'my_applications' %}" class="nav-link">Arizalarim</a>
+                {% endif %}
+                <a href="{% url 'conversation_list' %}" class="nav-link nav-chat">
+                    💬 Chatlar
+                </a>
+                <div class="nav-dropdown">
+                    <button class="nav-avatar-btn">
+                        {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="" class="nav-avatar-img">
+                        {% else %}
+                        <div class="nav-avatar-placeholder">{{ user.first_name|first|upper }}</div>
+                        {% endif %}
+                        <span>{{ user.first_name|default:user.username }}</span>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2 4l4 4 4-4"/></svg>
+                    </button>
+                    <div class="nav-dropdown-menu">
+                        <a href="{% url 'profile_own' %}">Profilim</a>
+                        <a href="{% url 'profile_edit' %}">Tahrirlash</a>
+                        <hr>
+                        <a href="{% url 'logout' %}">Chiqish</a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="{% url 'login' %}" class="nav-link">Kirish</a>
+                <a href="{% url 'register' %}" class="nav-link btn-register">Ro'yxatdan o'tish</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<div class="messages-container">
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }}">
+        <span>{{ msg }}</span>
+        <button onclick="this.parentElement.remove()">×</button>
+    </div>
+    {% endfor %}
+</div>
+
+<main class="main-content">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <a href="{% url 'home' %}"><span class="logo-icon">💼</span> <strong>IshTop</strong></a>
+            <p>O'zbekistonda kunlik ish bozori</p>
+        </div>
+        <div class="footer-links">
+            <div>
+                <h4>Sahifalar</h4>
+                <a href="{% url 'job_list' %}">Barcha ishlar</a>
+                {% if user.is_authenticated and user.profile.role == 'employer' %}
+                <a href="{% url 'job_create' %}">Ish e'lon qilish</a>
+                {% endif %}
+            </div>
+            <div>
+                <h4>Hisob</h4>
+                {% if user.is_authenticated %}
+                <a href="{% url 'profile_own' %}">Profilim</a>
+                <a href="{% url 'conversation_list' %}">Chatlar</a>
+                <a href="{% url 'logout' %}">Chiqish</a>
+                {% else %}
+                <a href="{% url 'login' %}">Kirish</a>
+                <a href="{% url 'register' %}">Ro'yxatdan o'tish</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2026 IshTop. Barcha huquqlar himoyalangan.</p>
+    </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Baholash — IshTop{% endblock %}
+{% block content %}
+<div class="container form-page">
+    <div class="form-card">
+        <h2>⭐ Ishchini baholash</h2>
+        <div class="rate-worker-info">
+            {% if worker_profile.avatar %}
+            <img src="{{ worker_profile.avatar.url }}" class="employer-avatar" alt="">
+            {% else %}
+            <div class="employer-avatar-placeholder">{{ worker.first_name|first|upper }}</div>
+            {% endif %}
+            <div>
+                <strong>{{ worker.get_full_name|default:worker.username }}</strong>
+                <p>Ish: <a href="{% url 'job_detail' job.pk %}">{{ job.title }}</a></p>
+            </div>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Baho (1 dan 5 gacha)</label>
+                <div class="star-rating" id="starRating">
+                    {% for i in range %}
+                    <button type="button" class="star-btn" data-score="{{ i }}">★</button>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="score" id="scoreInput" value="">
+            </div>
+            <div class="form-group">
+                <label>Izoh (ixtiyoriy)</label>
+                <textarea name="comment" class="form-control" rows="4" placeholder="Ish haqida fikringiz..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg" id="submitRating" disabled>Baholash</button>
+                <a href="{% url 'job_detail' job.pk %}" class="btn btn-ghost">Bekor qilish</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    const stars = document.querySelectorAll('.star-btn');
+    const scoreInput = document.getElementById('scoreInput');
+    const submitBtn = document.getElementById('submitRating');
+    stars.forEach((star, i) => {
+        star.addEventListener('click', () => {
+            scoreInput.value = i + 1;
+            submitBtn.disabled = false;
+            stars.forEach((s, j) => s.classList.toggle('active', j <= i));
+        });
+        star.addEventListener('mouseover', () => {
+            stars.forEach((s, j) => s.classList.toggle('hover', j <= i));
+        });
+        star.addEventListener('mouseout', () => {
+            stars.forEach(s => s.classList.remove('hover'));
+        });
+    });
+</script>
+{% endblock %}

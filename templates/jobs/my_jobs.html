@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Mening ishlarim — IshTop{% endblock %}
+{% block content %}
+<div class="container form-page">
+    <div class="page-header">
+        <h2>Mening e'lonlarim</h2>
+        <a href="{% url 'job_create' %}" class="btn btn-primary">+ Yangi e'lon</a>
+    </div>
+    {% if jobs %}
+    <div class="jobs-list">
+        {% for job in jobs %}
+        <div class="job-manage-card">
+            <div class="job-manage-info">
+                <a href="{% url 'job_detail' job.pk %}">
+                    <h3>{{ job.title }}</h3>
+                </a>
+                <div class="job-manage-meta">
+                    <span class="job-status status-{{ job.status }}">{{ job.get_status_display }}</span>
+                    <span>📍 {{ job.address }}</span>
+                    <span>👥 {{ job.applications.count }} ariza</span>
+                    <span>✅ {{ job.accepted_count }} qabul</span>
+                    <span>{{ job.get_salary_display_text }}</span>
+                </div>
+            </div>
+            <div class="job-manage-actions">
+                <a href="{% url 'job_detail' job.pk %}" class="btn btn-outline btn-sm">Ko'rish</a>
+                <a href="{% url 'job_edit' job.pk %}" class="btn btn-ghost btn-sm">✏️</a>
+                {% if job.status == 'ochiq' %}
+                <form method="post" action="{% url 'complete_job' job.pk %}" style="display:inline">
+                    {% csrf_token %}
+                    <button class="btn btn-ghost btn-sm" onclick="return confirm('Ishni tugallanding?')">✓
+                        Tugallash</button>
+                </form>
+                {% endif %}
+                <a href="{% url 'job_delete' job.pk %}" class="btn btn-danger btn-sm"
+                    onclick="return confirm('O\'chirilsinmi?')">🗑️</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📢</div>
+        <h3>Hali e'lon yo'q</h3>
+        <p>Birinchi ish e'loningizni joylashtiring!</p>
+        <a href="{% url 'job_create' %}" class="btn btn-primary">E'lon qo'shish</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}{% if edit %}Tahrirlash{% else %}Ish e'lon qilish{% endif %} — IshTop{% endblock %}
+{% block content %}
+<div class="container form-page">
+    <div class="form-card">
+        <h2>{% if edit %}✏️ E'lonni tahrirlash{% else %}📢 Yangi ish e'lon qilish{% endif %}</h2>
+
+        <form method="post" enctype="multipart/form-data" id="jobForm">
+            {% csrf_token %}
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>{{ form.title.label }}</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}<span class="form-error">{{ form.title.errors.0 }}</span>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.category.label }}</label>
+                    {{ form.category }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label>{{ form.description.label }}</label>
+                {{ form.description }}
+            </div>
+            <div class="form-grid-3">
+                <div class="form-group">
+                    <label>{{ form.salary.label }}</label>
+                    {{ form.salary }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.salary_type.label }}</label>
+                    {{ form.salary_type }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.workers_needed.label }}</label>
+                    {{ form.workers_needed }}
+                </div>
+            </div>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>{{ form.region.label }}</label>
+                    {{ form.region }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.work_date.label }}</label>
+                    {{ form.work_date }}
+                </div>
+            </div>
+
+            <!-- Address with geocoding -->
+            <div class="form-group">
+                <label>{{ form.address.label }}</label>
+                <div class="address-row">
+                    {{ form.address }}
+                    <button type="button" class="btn btn-outline" id="geocodeBtn">📍 Kartada ko'rsatish</button>
+                </div>
+                {{ form.lat }}
+                {{ form.lng }}
+            </div>
+
+            <!-- Map preview -->
+            <div id="create-map-wrapper" style="display:none; margin:1rem 0;">
+                <div id="create-map" style="height:280px; border-radius:16px;"></div>
+                <small class="text-muted">Markerning aniq joyini o'zgartirish uchun uni suring</small>
+            </div>
+
+            <div class="form-group">
+                <label>{{ form.image.label }}</label>
+                {{ form.image }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.status.label }}</label>
+                {{ form.status }}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    {% if edit %}Saqlash{% else %}E'lon qilish{% endif %}
+                </button>
+                <a href="{% if edit %}{% url 'job_detail' job.pk %}{% else %}{% url 'my_jobs' %}{% endif %}"
+                    class="btn btn-ghost">Bekor qilish</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    let createMap = null;
+    let createMarker = null;
+
+    document.getElementById('geocodeBtn').addEventListener('click', function () {
+        const address = document.querySelector('[name="address"]').value;
+        if (!address) { alert("Avval manzilni kiriting"); return; }
+
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ', O\'zbekiston')}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.length === 0) { alert("Manzil topilmadi. Aniqroq manzil kiriting."); return; }
+                const lat = parseFloat(data[0].lat);
+                const lng = parseFloat(data[0].lon);
+                document.querySelector('[name="lat"]').value = lat;
+                document.querySelector('[name="lng"]').value = lng;
+
+                document.getElementById('create-map-wrapper').style.display = 'block';
+                if (!createMap) {
+                    createMap = L.map('create-map').setView([lat, lng], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(createMap);
+                    createMarker = L.marker([lat, lng], { draggable: true }).addTo(createMap);
+                    createMarker.on('dragend', function (e) {
+                        const pos = e.target.getLatLng();
+                        document.querySelector('[name="lat"]').value = pos.lat.toFixed(6);
+                        document.querySelector('[name="lng"]').value = pos.lng.toFixed(6);
+                    });
+                } else {
+                    createMap.setView([lat, lng], 15);
+                    createMarker.setLatLng([lat, lng]);
+                }
+            });
+    });
+</script>
+{% endblock %}

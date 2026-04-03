@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Profilni tahrirlash — IshTop{% endblock %}
+{% block content %}
+<div class="container form-page">
+    <div class="form-card">
+        <h2>✏️ Profilni tahrirlash</h2>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>{{ form.first_name.label }}</label>
+                    {{ form.first_name }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.last_name.label }}</label>
+                    {{ form.last_name }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label>{{ form.email.label }}</label>
+                {{ form.email }}
+            </div>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>{{ form.region.label }}</label>
+                    {{ form.region }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.phone.label }}</label>
+                    {{ form.phone }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label>{{ form.bio.label }}</label>
+                {{ form.bio }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.avatar.label }}</label>
+                {% if instance.avatar %}
+                <div class="current-avatar">
+                    <img src="{{ instance.avatar.url }}" alt=""
+                        style="width:60px;height:60px;border-radius:50%;object-fit:cover;">
+                    <span>Joriy rasm</span>
+                </div>
+                {% endif %}
+                {{ form.avatar }}
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-lg">Saqlash</button>
+                <a href="{% url 'profile_own' %}" class="btn btn-ghost">Bekor qilish</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

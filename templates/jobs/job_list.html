@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Barcha ishlar — IshTop{% endblock %}
+{% block content %}
+<div class="container page-layout">
+    <div class="filter-sidebar">
+        <div class="filter-card">
+            <h3>🔍 Qidirish va filter</h3>
+            <form method="get" id="filterForm">
+                <div class="form-group">
+                    <label>Kalit so'z</label>
+                    <input type="text" name="q" value="{{ q }}" placeholder="Ish nomi yoki manzil..."
+                        class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Viloyat</label>
+                    <select name="region" class="form-control" onchange="this.form.submit()">
+                        <option value="">Barcha viloyatlar</option>
+                        {% for key, val in regions %}
+                        <option value="{{ key }}" {% if selected_region==key %}selected{% endif %}>{{ val }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Kategoriya</label>
+                    <select name="category" class="form-control" onchange="this.form.submit()">
+                        <option value="">Barcha kategoriyalar</option>
+                        {% for key, val in categories %}
+                        <option value="{{ key }}" {% if selected_category==key %}selected{% endif %}>{{ val }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Qidirish</button>
+                {% if selected_region or selected_category or q %}
+                <a href="{% url 'job_list' %}" class="btn btn-ghost btn-block">Tozalash</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <div class="jobs-main">
+        <div class="jobs-header">
+            <h2>
+                {% if q or selected_region or selected_category %}
+                Qidiruv natijalari
+                {% else %}
+                Barcha e'lonlar
+                {% endif %}
+                <span class="count-badge">{{ jobs.count }}</span>
+            </h2>
+        </div>
+
+        {% if jobs %}
+        <div class="jobs-list">
+            {% for job in jobs %}
+            <a href="{% url 'job_detail' job.pk %}" class="job-list-card">
+                {% if job.image %}
+                <div class="job-list-img">
+                    <img src="{{ job.image.url }}" alt="{{ job.title }}">
+                </div>
+                {% else %}
+                <div class="job-list-img job-list-img-placeholder">
+                    <span>{{ job.get_category_display|first }}</span>
+                </div>
+                {% endif %}
+                <div class="job-list-body">
+                    <div class="job-list-top">
+                        <span class="job-badge">{{ job.get_category_display }}</span>
+                        <span class="job-time">{{ job.created_at|timesince }} oldin</span>
+                    </div>
+                    <h3>{{ job.title }}</h3>
+                    <p class="job-desc-preview">{{ job.description|truncatewords:20 }}</p>
+                    <div class="job-list-meta">
+                        <span>📍 {{ job.address }}</span>
+                        <span>👥 {{ job.workers_needed }} ishchi</span>
+                        {% if job.work_date %}
+                        <span>📅 {{ job.work_date }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="job-list-salary">
+                    <strong>{{ job.get_salary_display_text }}</strong>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <h3>Ishlar topilmadi</h3>
+            <p>Filter sozlamalarini o'zgartiring</p>
+            <a href="{% url 'job_list' %}" class="btn btn-outline">Barcha ishlarni ko'rish</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

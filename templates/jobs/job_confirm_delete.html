@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}E'lonni o'chirish — IshTop{% endblock %}
+{% block content %}
+<div class="container form-page">
+    <div class="form-card text-center">
+        <div class="empty-icon">🗑️</div>
+        <h2>E'lonni o'chirish</h2>
+        <p><strong>"{{ job.title }}"</strong> e'lonini o'chirmoqchimisiz?</p>
+        <p class="text-muted">Bu amalni qaytarib bo'lmaydi.</p>
+        <div class="form-actions" style="justify-content:center">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-lg">Ha, o'chirish</button>
+            </form>
+            <a href="{% url 'job_detail' job.pk %}" class="btn btn-ghost btn-lg">Bekor qilish</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Ro'yxatdan o'tish — IshTop{% endblock %}
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card auth-card-wide">
+        <div class="auth-logo">💼 IshTop</div>
+        <h2>Ro'yxatdan o'tish</h2>
+
+        <!-- Role selector tabs -->
+        <div class="role-tabs">
+            <button class="role-tab active" data-role="worker" type="button">
+                🧰 Men ishchi
+                <small>Ish qidiraman</small>
+            </button>
+            <button class="role-tab" data-role="employer" type="button">
+                🏢 Men ish beruvchi
+                <small>Ishchi yollaymin</small>
+            </button>
+        </div>
+
+        <form method="post" id="registerForm">
+            {% csrf_token %}
+            <input type="hidden" name="role" id="roleField" value="worker">
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>{{ form.first_name.label }}</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}<span class="form-error">{{ form.first_name.errors.0 }}</span>{%
+                    endif %}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.last_name.label }}</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}<span class="form-error">{{ form.last_name.errors.0 }}</span>{% endif
+                    %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label>{{ form.username.label }}</label>
+                {{ form.username }}
+                {% if form.username.errors %}<span class="form-error">{{ form.username.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>{{ form.region.label }}</label>
+                    {{ form.region }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.phone.label }}</label>
+                    {{ form.phone }}
+                </div>
+            </div>
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>{{ form.password1.label }}</label>
+                    {{ form.password1 }}
+                    {% if form.password1.errors %}<span class="form-error">{{ form.password1.errors.0 }}</span>{% endif
+                    %}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.password2.label }}</label>
+                    {{ form.password2 }}
+                    {% if form.password2.errors %}<span class="form-error">{{ form.password2.errors.0 }}</span>{% endif
+                    %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block btn-lg">Ro'yxatdan o'tish</button>
+        </form>
+        <p class="auth-switch">Hisobingiz bormi? <a href="{% url 'login' %}">Kirish</a></p>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.role-tab').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.role-tab').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('roleField').value = this.dataset.role;
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Arizalarim — IshTop{% endblock %}
+{% block content %}
+<div class="container form-page">
+    <h2>Mening arizalarim</h2>
+    {% if applications %}
+    <div class="jobs-list">
+        {% for app in applications %}
+        <div class="job-manage-card">
+            <div class="job-manage-info">
+                <a href="{% url 'job_detail' app.job.pk %}">
+                    <h3>{{ app.job.title }}</h3>
+                </a>
+                <div class="job-manage-meta">
+                    <span class="job-status status-{{ app.status }}">{{ app.get_status_display }}</span>
+                    <span>📍 {{ app.job.address }}</span>
+                    <span>💰 {{ app.job.get_salary_display_text }}</span>
+                    <span>🕐 {{ app.created_at|timesince }} oldin</span>
+                </div>
+                {% if app.status == 'qabul_qilindi' %}
+                <a href="{% url 'conversation_list' %}" class="btn btn-primary btn-sm" style="margin-top:.5rem">💬
+                    Chatga o'tish</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h3>Hali ariza yo'q</h3>
+        <a href="{% url 'job_list' %}" class="btn btn-primary">Ishlarni ko'rish</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

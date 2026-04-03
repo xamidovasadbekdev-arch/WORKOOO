@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}{{ job.title }} — IshTop{% endblock %}
+{% block extra_head %}
+{% if job.lat and job.lng %}
+<style>
+    #job-map {
+        height: 320px;
+        border-radius: 16px;
+        overflow: hidden;
+        margin: 1rem 0;
+    }
+</style>
+{% endif %}
+{% endblock %}
+{% block content %}
+<div class="container detail-layout">
+    <div class="detail-main">
+        {% if job.image %}
+        <div class="detail-hero-img">
+            <img src="{{ job.image.url }}" alt="{{ job.title }}">
+        </div>
+        {% endif %}
+
+        <div class="detail-card">
+            <div class="detail-header">
+                <span class="job-badge">{{ job.get_category_display }}</span>
+                <span class="job-status status-{{ job.status }}">{{ job.get_status_display }}</span>
+            </div>
+            <h1>{{ job.title }}</h1>
+            <div class="detail-meta-row">
+                <span>📍 {{ job.address }}, {{ job.get_region_display }}</span>
+                {% if job.work_date %}<span>📅 {{ job.work_date }}</span>{% endif %}
+                <span>👥 {{ job.workers_needed }} ishchi</span>
+                <span>🕐 {{ job.created_at|timesince }} oldin</span>
+            </div>
+
+            <div class="salary-block">
+                <div class="salary-amount">{{ job.get_salary_display_text }}</div>
+            </div>
+
+            <h3>Ish haqida</h3>
+            <div class="job-description">{{ job.description|linebreaks }}</div>
+
+            {% if job.lat and job.lng %}
+            <h3>📍 Joylashuv</h3>
+            <div id="job-map"></div>
+            {% endif %}
+        </div>
+
+        <!-- Employer managing applications -->
+        {% if applications is not None %}
+        <div class="detail-card">
+            <h3>Arizalar ({{ applications.count }})</h3>
+            {% for app in applications %}
+            <div class="applicant-row">
+                <a href="{% url 'profile' app.worker.pk %}" class="applicant-info">
+                    {% if app.worker.profile.avatar %}
+                    <img src="{{ app.worker.profile.avatar.url }}" class="applicant-avatar" alt="">
+                    {% else %}
+                    <div class="applicant-avatar-placeholder">{{ app.worker.first_name|first|upper }}</div>
+                    {% endif %}
+                    <div>
+                        <strong>{{ app.worker.get_full_name|default:app.worker.username }}</strong>
+                        {% with avg=app.worker.profile.average_rating %}
+                        {% if avg %}<div class="mini-rating">⭐ {{ avg }}</div>{% endif %}
+                        {% endwith %}
+                        {% if app.message %}<p class="app-message">"{{ app.message }}"</p>{% endif %}
+                    </div>
+                </a>
+                <div class="applicant-actions">
+                    {% if app.status == 'kutilmoqda' %}
+                    <form method="post" action="{% url 'manage_application' app.pk %}" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="accept">
+                        <button class="btn btn-success btn-sm">✓ Qabul</button>
+                    </form>
+                    <form method="post" action="{% url 'manage_application' app.pk %}" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject">
+                        <button class="btn btn-danger btn-sm">✗ Rad</button>
+                    </form>
+                    {% elif app.status == 'qabul_qilindi' %}
+                    <span class="badge-accepted">Qabul qilindi</span>
+                    {% if job.status == 'tugallangan' %}
+                    <a href="{% url 'rate_worker' job.pk app.worker.pk %}" class="btn btn-outline btn-sm">⭐ Baholash</a>
+                    {% endif %}
+                    {% else %}
+                    <span class="badge-rejected">Rad etildi</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted">Hali ariza yo'q.</p>
+            {% endfor %}
+
+            {% if job.status == 'ochiq' %}
+            <form method="post" action="{% url 'complete_job' job.pk %}" style="margin-top:1rem">
+                {% csrf_token %}
+                <button class="btn btn-outline">✓ Ishni tugallandi deb belgilash</button>
+            </form>
+            {% endif %}
+
+            <div class="employer-manage-links">
+                <a href="{% url 'job_edit' job.pk %}" class="btn btn-ghost btn-sm">✏️ Tahrirlash</a>
+                <a href="{% url 'job_delete' job.pk %}" class="btn btn-danger btn-sm"
+                    onclick="return confirm('O\'chirilsinmi?')">🗑️ O'chirish</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="detail-sidebar">
+        <!-- Employer info -->
+        <div class="sidebar-card employer-card">
+            <h4>Ish beruvchi</h4>
+            <a href="{% url 'profile' job.employer.pk %}" class="employer-info">
+                {% if job.employer.profile.avatar %}
+                <img src="{{ job.employer.profile.avatar.url }}" class="employer-avatar" alt="">
+                {% else %}
+                <div class="employer-avatar-placeholder">{{ job.employer.first_name|first|upper }}</div>
+                {% endif %}
+                <div>
+                    <strong>{{ job.employer.get_full_name|default:job.employer.username }}</strong>
+                    <span>{{ job.employer.profile.get_region_display_name }}</span>
+                </div>
+            </a>
+        </div>
+
+        <!-- Apply section -->
+        {% if user.is_authenticated %}
+        {% if user != job.employer and user.profile.role == 'worker' %}
+        {% if job.status == 'ochiq' %}
+        {% if user_application %}
+        <div class="sidebar-card">
+            <div class="application-status-block status-{{ user_application.status }}">
+                {% if user_application.status == 'kutilmoqda' %}
+                ⏳ Arizangiz kutilmoqda...
+                {% elif user_application.status == 'qabul_qilindi' %}
+                ✅ Arizangiz qabul qilindi!
+                <a href="{% url 'conversation_list' %}" class="btn btn-primary btn-block" style="margin-top:.75rem">💬
+                    Chatga o'tish</a>
+                {% else %}
+                ❌ Ariza rad etildi
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="sidebar-card">
+            <h4>Ishga murojaat</h4>
+            <form method="post" action="{% url 'apply_job' job.pk %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <textarea name="message" class="form-control" rows="3"
+                        placeholder="O'zingiz haqingizda qisqacha..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">📩 Ariza yuborish</button>
+            </form>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="sidebar-card">
+            <p class="text-muted">Bu ish {{ job.get_status_display|lower }}.</p>
+        </div>
+        {% endif %}
+        {% endif %}
+        {% else %}
+        <div class="sidebar-card">
+            <p class="text-muted">Ariza topshirish uchun tizimga kiring.</p>
+            <a href="{% url 'login' %}" class="btn btn-primary btn-block">Kirish</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+{% if job.lat and job.lng %}
+<script>
+    const jobMap = L.map('job-map').setView([{{ job.lat }}, { { job.lng } }], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(jobMap);
+    const marker = L.marker([{{ job.lat }}, { { job.lng } }]).addTo(jobMap);
+    marker.bindPopup('<strong>{{ job.title|escapejs }}</strong><br>{{ job.address|escapejs }}').openPopup();
+</script>
+{% endif %}
+{% endblock %}

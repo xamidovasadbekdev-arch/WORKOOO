@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Chatlar — IshTop{% endblock %}
+{% block content %}
+<div class="container form-page">
+    <h2>💬 Chatlar</h2>
+    {% if conversations %}
+    <div class="conversation-list">
+        {% for conv in conversations %}
+        {% with last=conv.last_message unread=conv.unread_count %}
+        <a href="{% url 'conversation_detail' conv.pk %}" class="conv-card {% if unread %}conv-unread{% endif %}">
+            <div class="conv-other-avatar">
+                {% if user == conv.employer %}
+                {% if conv.worker.profile.avatar %}
+                <img src="{{ conv.worker.profile.avatar.url }}" alt="">
+                {% else %}
+                <div class="avatar-placeholder-sm">{{ conv.worker.first_name|first|upper }}</div>
+                {% endif %}
+                {% else %}
+                {% if conv.employer.profile.avatar %}
+                <img src="{{ conv.employer.profile.avatar.url }}" alt="">
+                {% else %}
+                <div class="avatar-placeholder-sm">{{ conv.employer.first_name|first|upper }}</div>
+                {% endif %}
+                {% endif %}
+            </div>
+            <div class="conv-info">
+                <div class="conv-top">
+                    <strong>
+                        {% if user == conv.employer %}{{ conv.worker.get_full_name|default:conv.worker.username }}
+                        {% else %}{{ conv.employer.get_full_name|default:conv.employer.username }}{% endif %}
+                    </strong>
+                    {% if last %}<span class="conv-time">{{ last.timestamp|timesince }} oldin</span>{% endif %}
+                </div>
+                <p class="conv-job">{{ conv.job.title }}</p>
+                {% if last %}<p class="conv-preview">{{ last.body|truncatechars:60 }}</p>{% endif %}
+            </div>
+            {% if unread %}<span class="unread-badge">{{ unread }}</span>{% endif %}
+        </a>
+        {% endwith %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">💬</div>
+        <h3>Hali chat yo'q</h3>
+        <p>Ishga ariza topshiring va qabul qilinganda chat ochiladi.</p>
+        <a href="{% url 'job_list' %}" class="btn btn-primary">Ishlarni ko'rish</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
